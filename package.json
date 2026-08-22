@@ -1,0 +1,49 @@
+{
+  "name": "next14-starter",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "check-types": "tsc --pretty --noEmit",
+    "check-format": "prettier --check .",
+    "check-lint": "eslint . --ext ts --ext tsx --ext js",
+    "format": "prettier --write .",
+    "test-all": "npm run check-format && npm run check-lint && npm run check-types && npm run build",
+    "prepare": "husky install"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "husky": "^9.0.11",
+    "lucide-react": "^1.14.0",
+    "mssql": "^12.5.0",
+    "next": "^14.2.35",
+    "next-auth": "^4.24.14",
+    "pg": "^8.23.0",
+    "prisma": "^7.9.1",
+    "react": "^18",
+    "react-dom": "^18",
+    "sweetalert2": "^11.26.24"
+  },
+  "devDependencies": {
+    "@types/mssql": "^12.3.0",
+    "@types/node": "^20.19.40",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "autoprefixer": "^10.5.0",
+    "eslint": "^8",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-next": "^14.2.35",
+    "eslint-config-prettier": "^9.1.0",
+    "postcss": "^8.5.14",
+    "prettier": "3.2.5",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model HsUserID {
+  ID           BigInt    @id @default(autoincrement())
+  Username     String?   @db.VarChar(100)
+  Nama         String?   @db.VarChar(100)
+  Role         String?   @db.VarChar(50)
+  LoginTime    DateTime? @db.Timestamp(6)
+  LogoutTime   DateTime? @db.Timestamp(6)
+  StatusLogin  String?   @db.VarChar(50)
+  IPAddress    String?   @db.VarChar(100)
+  UserAgent    String?
+  SessionToken String?
+}
+
+model MsKategori {
+  ID           BigInt    @id @default(autoincrement())
+  KodeKategori String    @unique @db.VarChar(50)
+  NamaKategori String?   @db.VarChar(150)
+  Status       Boolean?
+  WaktuDiubah  DateTime? @db.Timestamp(6)
+  DiubahOleh   String?   @db.VarChar(50)
+  WaktuDibuat  DateTime? @db.Timestamp(6)
+  DibuatOleh   String?   @db.VarChar(50)
+}
+
+model MsMenu {
+  ID          BigInt    @id @default(autoincrement())
+  MenuCode    String?   @unique @db.VarChar(50)
+  MenuName    String?   @db.VarChar(100)
+  Url         String?   @db.VarChar(255)
+  Icon        String?   @db.VarChar(100)
+  ParentID    Int?
+  Sort        Int?
+  IsActive    Boolean?
+  WaktuDiubah DateTime? @db.Timestamp(6)
+  DiubahOleh  String?   @db.VarChar(50)
+  WaktuDibuat DateTime? @db.Timestamp(6)
+  DibuatOleh  String?   @db.VarChar(50)
+
+  RoleMenus   RoleMenu[]
+}
+
+model MsProduk {
+  ID             BigInt    @id @default(autoincrement())
+  KodeBarang     String    @unique @db.VarChar(100)
+  NamaBarang     String?   @db.VarChar(250)
+  KategoriBarang String?   @db.VarChar(250)
+  Satuan         String?   @db.VarChar(50)
+  HargaBeli      Decimal?  @db.Decimal(18, 0)
+  HargaJual      Decimal?  @db.Decimal(18, 0)
+  Barcode        String?   @db.VarChar(250)
+  Status         Boolean?
+  Keterangan     String?   @db.VarChar(250)
+  WaktuDiubah    DateTime? @db.Timestamp(6)
+  DiubahOleh     String?   @db.VarChar(50)
+  WaktuDibuat    DateTime? @db.Timestamp(6)
+  DibuatOleh     String?   @db.VarChar(50)
+}
+
+model MsRole {
+  ID          BigInt    @id @default(autoincrement())
+  RoleCode    String?   @unique @db.VarChar(50)
+  RoleName    String?   @db.VarChar(100)
+  IsActive    Boolean?
+  WaktuDibuat DateTime? @db.Timestamp(6)
+  DibuatOleh  String?   @db.VarChar(50)
+  WaktuDiubah DateTime? @db.Timestamp(6)
+  DiubahOleh  String?   @db.VarChar(50)
+}
+
+model MutasiProduk {
+  ID             BigInt    @id @default(autoincrement())
+  KodeBarang     String?   @db.VarChar(100)
+  KategoriProduk String?   @db.VarChar(100)
+  JenisMutasi    String?   @db.VarChar(100)
+  Qty            Int?
+  Referensi      String?   @db.VarChar(100)
+  Tanggal        DateTime? @db.Timestamp(6)
+  WaktuDiubah    DateTime? @db.Timestamp(6)
+  DiubahOleh     String?   @db.VarChar(50)
+  WaktuDibuat    DateTime? @db.Timestamp(6)
+  DibuatOleh     String?   @db.VarChar(50)
+}
+
+model RoleMenu {
+  ID        Int      @id @default(autoincrement())
+  RoleName  String?  @db.VarChar(50)
+  MenuCode  String?  @db.VarChar(50)
+  CanView   Boolean? @default(false)
+  CanAdd    Boolean? @default(false)
+  CanEdit   Boolean? @default(false)
+  CanDelete Boolean? @default(false)
+
+  
+ MsMenu MsMenu? @relation(fields: [MenuCode], references: [MenuCode])
+}
+
+model StokProduk {
+  ID          BigInt    @id @default(autoincrement())
+  KodeBarang  String    @unique @db.VarChar(100)
+  Qty         Int?      @default(0)
+  MinimumStok Int?      @default(0)
+  WaktuDiubah DateTime? @db.Timestamp(6)
+  DiubahOleh  String?   @db.VarChar(50)
+  WaktuDibuat DateTime? @db.Timestamp(6)
+  DibuatOleh  String?   @db.VarChar(50)
+}
+
+model TrTransactionDtl {
+  ID          BigInt    @id @default(autoincrement())
+  NoTransaksi String    @db.VarChar(100)
+  KodeBarang  String?   @db.VarChar(100)
+  Qty         Int?
+  Harga       Decimal?  @db.Decimal(18, 0)
+  Subtotal    Decimal?  @db.Decimal(18, 0)
+  WaktuDiubah DateTime? @db.Timestamp(6)
+  DiubahOleh  String?   @db.VarChar(50)
+  WaktuDibuat DateTime? @db.Timestamp(6)
+  DibuatOleh  String?   @db.VarChar(50)
+}
+
+model TrTransactionHdr {
+  ID              BigInt    @id @default(autoincrement())
+  NoTransaksi     String    @unique @db.VarChar(100)
+  Tanggal         DateTime? @db.Timestamp(6)
+  UserId          String?   @db.VarChar(100)
+  TotalHarga      Decimal?  @db.Decimal(18, 0)
+  Bayar           Decimal?  @db.Decimal(18, 0)
+  Kembalian       Decimal?  @db.Decimal(18, 0)
+  JenisPembayaran String?   @db.VarChar(50)
+  Status          String?   @db.VarChar(50)
+  WaktuDiubah     DateTime? @db.Timestamp(6)
+  DiubahOleh      String?   @db.VarChar(50)
+  WaktuDibuat     DateTime? @db.Timestamp(6)
+  DibuatOleh      String?   @db.VarChar(50)
+}
+
+model UserID {
+  ID                 BigInt    @id @default(autoincrement())
+  Username           String    @unique @db.VarChar(150)
+  Password           String?   @db.VarChar(300)
+  Nama               String?   @db.VarChar(250)
+  Role               String?   @db.VarChar(100)
+  KodeCabang         String?   @db.VarChar(100)
+  IsActive           Boolean?
+  MustChangePassword Boolean?
+  WaktuDiubah        DateTime? @db.Timestamp(6)
+  DiubahOleh         String?   @db.VarChar(50)
+  WaktuDibuat        DateTime? @db.Timestamp(6)
+  DibuatOleh         String?   @db.VarChar(50)
+}
