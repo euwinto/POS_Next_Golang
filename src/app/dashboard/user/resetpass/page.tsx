@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
+import PermissionGuard from "@/components/PermissionGuard";
+const token = localStorage.getItem("token");
 
 export default function ResetPasswordPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -9,7 +11,13 @@ export default function ResetPasswordPage() {
 
   const getUsers = async () => {
     try {
-      const res = await fetch("/api/master/user");
+      // const res = await fetch("/api/master/user");
+      const res = await fetch("http://localhost:8080/api/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       const result = await res.json();
 
       setUsers(result.data || []);
@@ -47,16 +55,26 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      const res = await fetch("/api/master/user/resetpassword", {
+      const res = await fetch("http://localhost:8080/api/auth/reset-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-
         body: JSON.stringify({
           username: selectedUser,
         }),
       });
+      // const res = await fetch("/api/master/user/resetpassword", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+
+      //   body: JSON.stringify({
+      //     username: selectedUser,
+      //   }),
+      // });
 
       const result = await res.json();
 
@@ -89,35 +107,37 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="bg-white rounded-xl shadow p-6 max-w-xl">
-        <h1 className="text-2xl font-bold mb-6">Reset Password User</h1>
+    <PermissionGuard menuCode="RESETPASSWORD">
+      <div className="p-6">
+        <div className="bg-white rounded-xl shadow p-6 max-w-xl">
+          <h1 className="text-2xl font-bold mb-6">Reset Password User</h1>
 
-        <div className="mb-5">
-          <label className="block mb-2 text-sm font-medium">Pilih User</label>
+          <div className="mb-5">
+            <label className="block mb-2 text-sm font-medium">Pilih User</label>
 
-          <select
-            value={selectedUser}
-            onChange={(e) => setSelectedUser(e.target.value)}
-            className="w-full border rounded-lg p-3"
+            <select
+              value={selectedUser}
+              onChange={(e) => setSelectedUser(e.target.value)}
+              className="w-full border rounded-lg p-3"
+            >
+              <option value="">-- PILIH USER --</option>
+
+              {users.map((item, index) => (
+                <option key={index} value={item.Username}>
+                  {item.Username} - {item.Nama}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={handleReset}
+            className="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg"
           >
-            <option value="">-- PILIH USER --</option>
-
-            {users.map((item, index) => (
-              <option key={index} value={item.Username}>
-                {item.Username} - {item.Nama}
-              </option>
-            ))}
-          </select>
+            Reset Password
+          </button>
         </div>
-
-        <button
-          onClick={handleReset}
-          className="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg"
-        >
-          Reset Password
-        </button>
       </div>
-    </div>
+    </PermissionGuard>
   );
 }

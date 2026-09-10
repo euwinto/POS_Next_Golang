@@ -1,68 +1,78 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
-import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // const [loading, setLoading] = useState(false);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // const handleLogin = async (e: any) => {
-  //   e.preventDefault();
-
-  //   const res = await fetch("/api/login", {
-  //     method: "POST",
-  //     body: JSON.stringify({
-  //       username: email,
-  //       password: password,
-  //     }),
-  //   });
-
-  //   const data = await res.json();
-
-  //   if (data.success) {
-  //     router.push("/dashboard");
-  //   } else {
-  //     // alert(data.message);
-  //     Swal.fire({
-  //       icon: "error",
-  //       title: "Login gagal",
-  //       text: data.message,
-  //     });
-  //   }
-  // };
-
-  const handleLogin = async (e: any) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const result = await signIn("credentials", {
-      username: email,
-      password,
-      redirect: false,
-    });
-
-    if (result?.ok) {
+    if (!email || !password) {
       Swal.fire({
-        icon: "success",
-        title: "Login berhasil",
-        timer: 1000,
-        showConfirmButton: false,
+        icon: "warning",
+        title: "Login",
+        text: "Username dan password wajib diisi",
       });
 
-      router.push("/dashboard");
-    } else {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: email,
+          password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        // Simpan token
+        localStorage.setItem("token", data.token);
+
+        // Simpan informasi user
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        await Swal.fire({
+          icon: "success",
+          title: "Login berhasil",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+
+        router.push("/dashboard");
+        return;
+      }
+
       Swal.fire({
         icon: "error",
         title: "Login gagal",
-        text: "Username atau password salah",
+        text: data.message || "Username atau password salah",
       });
+    } catch (error) {
+      console.error("LOGIN ERROR:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Login gagal",
+        text: "Tidak dapat terhubung ke server",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
