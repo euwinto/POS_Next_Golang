@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
+import PermissionGuard from "@/components/PermissionGuard";
 
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 
 export default function RoleMenuPage() {
+  const token = localStorage.getItem("token");
   const [roles, setRoles] = useState<any[]>([]);
   // const [menus, setMenus] = useState<any[]>([]);
   const [, setMenus] = useState<any[]>([]);
@@ -15,12 +17,20 @@ export default function RoleMenuPage() {
 
   const getData = async () => {
     try {
-      const roleRes = await fetch("/api/master/role");
+      const roleRes = await fetch("http://localhost:8080/api/role", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const roleResult = await roleRes.json();
 
       setRoles(roleResult.data || []);
 
-      const menuRes = await fetch("/api/master/menu");
+      const menuRes = await fetch("http://localhost:8080/api/menu", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const menuResult = await menuRes.json();
 
       setMenus(menuResult.data || []);
@@ -31,7 +41,16 @@ export default function RoleMenuPage() {
 
   const getRoleMenu = async (role: string) => {
     try {
-      const res = await fetch(`/api/master/rolemenu?role=${role}`);
+      // const res = await fetch(`/api/master/rolemenu?role=${role}`);
+      const res = await fetch(
+        `http://localhost:8080/api/role-menu?role=${encodeURIComponent(role)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       const result = await res.json();
 
       setPermissions(result.data || []);
@@ -67,10 +86,11 @@ export default function RoleMenuPage() {
 
   const handleSave = async () => {
     try {
-      const res = await fetch("/api/master/rolemenu", {
+      const res = await fetch("http://localhost:8080/api/role-menu", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
 
         body: JSON.stringify({
@@ -106,113 +126,119 @@ export default function RoleMenuPage() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Role Menu</h1>
+    <PermissionGuard menuCode="ROLEMENU">
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-6">Role Menu</h1>
 
-      {/* SELECT ROLE */}
-      <div className="bg-white rounded-xl shadow p-4 mb-6">
-        <label className="block text-sm font-medium mb-2">Pilih Role</label>
+        {/* SELECT ROLE */}
+        <div className="bg-white rounded-xl shadow p-4 mb-6">
+          <label className="block text-sm font-medium mb-2">Pilih Role</label>
 
-        <select
-          value={selectedRole}
-          onChange={(e) => setSelectedRole(e.target.value)}
-          className="border rounded-lg p-2 w-80"
-        >
-          <option value="">-- SELECT ROLE --</option>
-
-          {roles.map((item) => (
-            <option key={item.RoleCode} value={item.RoleCode}>
-              {item.RoleName}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* TABLE */}
-      <div className="bg-white rounded-xl shadow overflow-auto">
-        <table className="w-full border-collapse">
-          <thead className="bg-slate-100">
-            <tr>
-              <th className="border p-3 text-left">Menu</th>
-              <th className="border p-3 text-center">View</th>
-              <th className="border p-3 text-center">Add</th>
-              <th className="border p-3 text-center">Edit</th>
-              <th className="border p-3 text-center">Delete</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {permissions.map((item, index) => (
-              <tr key={index}>
-                <td className="border p-3">
-                  {item.ParentID ? "↳ " : ""}
-                  {item.MenuName}
-                </td>
-
-                <td className="border p-3 text-center">
-                  <input
-                    type="checkbox"
-                    checked={item.CanView}
-                    onChange={(e) =>
-                      handleCheck(item.MenuCode, "CanView", e.target.checked)
-                    }
-                  />
-                </td>
-
-                <td className="border p-3 text-center">
-                  <input
-                    type="checkbox"
-                    checked={item.CanAdd}
-                    onChange={(e) =>
-                      handleCheck(item.MenuCode, "CanAdd", e.target.checked)
-                    }
-                  />
-                </td>
-
-                <td className="border p-3 text-center">
-                  <input
-                    type="checkbox"
-                    checked={item.CanEdit}
-                    onChange={(e) =>
-                      handleCheck(item.MenuCode, "CanEdit", e.target.checked)
-                    }
-                  />
-                </td>
-
-                <td className="border p-3 text-center">
-                  <input
-                    type="checkbox"
-                    checked={item.CanDelete}
-                    onChange={(e) =>
-                      handleCheck(item.MenuCode, "CanDelete", e.target.checked)
-                    }
-                  />
-                </td>
-              </tr>
-            ))}
-
-            {permissions.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center p-5 text-slate-500">
-                  No Data
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* BUTTON */}
-      {selectedRole && (
-        <div className="mt-5">
-          <button
-            onClick={handleSave}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg"
+          <select
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            className="border rounded-lg p-2 w-80"
           >
-            Save Permission
-          </button>
+            <option value="">-- SELECT ROLE --</option>
+
+            {roles.map((item) => (
+              <option key={item.RoleCode} value={item.RoleCode}>
+                {item.RoleName}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
-    </div>
+
+        {/* TABLE */}
+        <div className="bg-white rounded-xl shadow overflow-auto">
+          <table className="w-full border-collapse">
+            <thead className="bg-slate-100">
+              <tr>
+                <th className="border p-3 text-left">Menu</th>
+                <th className="border p-3 text-center">View</th>
+                <th className="border p-3 text-center">Add</th>
+                <th className="border p-3 text-center">Edit</th>
+                <th className="border p-3 text-center">Delete</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {permissions.map((item, index) => (
+                <tr key={index}>
+                  <td className="border p-3">
+                    {item.ParentID ? "↳ " : ""}
+                    {item.MenuName}
+                  </td>
+
+                  <td className="border p-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={item.CanView}
+                      onChange={(e) =>
+                        handleCheck(item.MenuCode, "CanView", e.target.checked)
+                      }
+                    />
+                  </td>
+
+                  <td className="border p-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={item.CanAdd}
+                      onChange={(e) =>
+                        handleCheck(item.MenuCode, "CanAdd", e.target.checked)
+                      }
+                    />
+                  </td>
+
+                  <td className="border p-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={item.CanEdit}
+                      onChange={(e) =>
+                        handleCheck(item.MenuCode, "CanEdit", e.target.checked)
+                      }
+                    />
+                  </td>
+
+                  <td className="border p-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={item.CanDelete}
+                      onChange={(e) =>
+                        handleCheck(
+                          item.MenuCode,
+                          "CanDelete",
+                          e.target.checked
+                        )
+                      }
+                    />
+                  </td>
+                </tr>
+              ))}
+
+              {permissions.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center p-5 text-slate-500">
+                    No Data
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* BUTTON */}
+        {selectedRole && (
+          <div className="mt-5">
+            <button
+              onClick={handleSave}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg"
+            >
+              Save Permission
+            </button>
+          </div>
+        )}
+      </div>
+    </PermissionGuard>
   );
 }

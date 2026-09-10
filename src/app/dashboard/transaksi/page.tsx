@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
+import PermissionGuard from "@/components/PermissionGuard";
+
 // import { useSession } from "next-auth/react";
 // const { data: session } = useSession();
 // export async function GET() {
@@ -22,6 +24,8 @@ type CartItem = Produk & {
   qty: number;
 };
 
+const token = localStorage.getItem("token");
+
 export default function TransaksiPage() {
   const [produk, setProduk] = useState<Produk[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -36,18 +40,46 @@ export default function TransaksiPage() {
     return new Intl.NumberFormat("id-ID").format(angka);
   };
 
+  // FORMAT INPUT UANG
+  const formatInputUang = (value: string) => {
+    // Ambil angka saja
+    const angka = value.replace(/\D/g, "");
+
+    // Hilangkan angka 0 di depan
+    const tanpaNolDepan = angka.replace(/^0+/, "");
+
+    // Kalau kosong
+    if (!tanpaNolDepan) {
+      return "";
+    }
+
+    // Format ribuan
+    return new Intl.NumberFormat("id-ID").format(Number(tanpaNolDepan));
+  };
+
   // AMBIL KATEGORI
   const getKategori = async () => {
     try {
-      const res = await fetch("/api/transaction/kategori?aktif=1");
-      const data = await res.json();
-
-      setKategori(data);
+      // const res = await fetch("/api/transaction/kategori?aktif=1");
+      const res = await fetch(
+        "http://localhost:8080/api/transaction/kategori?aktif=1",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const result = await res.json();
+      // setKategori(data);
+      setKategori(result.data || []);
 
       // otomatis pilih kategori pertama
-      if (data.length > 0) {
-        setSelectedKategori(data[0].NamaKategori);
-      }
+      // if (result.data.length > 0) {
+      //   // setSelectedKategori(result.data[0].NamaKategori);
+      //   setSelectedKategori(result.data[0].KodeKategori);
+      // }
+      setSelectedKategori("");
     } catch (err) {
       console.error(err);
     }
@@ -56,7 +88,16 @@ export default function TransaksiPage() {
   // GET PRODUK
   const getProduk = async () => {
     try {
-      const res = await fetch("/api/master/produk?aktif=1");
+      // const res = await fetch("/api/master/produk?aktif=1");
+      const res = await fetch(
+        "http://localhost:8080/api/transaction/produk?aktif=1",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       const data = await res.json();
       setProduk(data);
     } catch (err) {
@@ -152,11 +193,12 @@ export default function TransaksiPage() {
       }
 
       setLoading(true);
-
-      const res = await fetch("/api/transaksi", {
+      // const res = await fetch("/api/transaksi", {
+      const res = await fetch("http://localhost:8080/api/transaction", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           cart,
@@ -210,232 +252,242 @@ export default function TransaksiPage() {
   };
 
   return (
-    <div className="p-4 grid grid-cols-3 gap-4 min-h-screen bg-gray-100">
-      {/* LEFT */}
-      <div className="col-span-1 bg-white p-4 rounded shadow flex flex-col">
-        <h2 className="font-bold text-lg mb-3">Produk</h2>
+    <PermissionGuard menuCode="POS">
+      <div className="p-4 grid grid-cols-3 gap-4 min-h-screen bg-gray-100">
+        {/* LEFT */}
+        <div className="col-span-1 bg-white p-4 rounded shadow flex flex-col">
+          <h2 className="font-bold text-lg mb-3">Produk</h2>
 
-        <input
-          type="text"
-          placeholder="Cari produk..."
-          className="border p-2 mb-3 rounded"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {/* KATEGORI */}
-        <div className="flex gap-2 mb-4 flex-wrap">
-          <button
-            onClick={() => setSelectedKategori("")}
-            className={`px-3 py-2 rounded border ${
-              selectedKategori === "" ? "bg-blue-600 text-white" : "bg-white"
-            }`}
-          >
-            Semua
-          </button>
-
-          {kategori.map((item: any) => (
+          <input
+            type="text"
+            placeholder="Cari produk..."
+            className="border p-2 mb-3 rounded"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {/* KATEGORI */}
+          <div className="flex gap-2 mb-4 flex-wrap">
             <button
-              key={item.KodeKategori}
-              onClick={() => setSelectedKategori(item.KodeKategori)}
+              onClick={() => setSelectedKategori("")}
               className={`px-3 py-2 rounded border ${
-                selectedKategori === item.KodeKategori
-                  ? "bg-blue-600 text-white"
-                  : "bg-white"
+                selectedKategori === "" ? "bg-blue-600 text-white" : "bg-white"
               }`}
             >
-              {item.NamaKategori}
+              Semua
             </button>
-          ))}
-        </div>
 
-        <div className="overflow-auto">
-          {filteredProduk.map((item) => (
-            <div
-              key={item.KodeBarang}
-              className="border p-2 mb-2 rounded flex justify-between items-center"
-            >
-              <div>
-                <div className="font-semibold">{item.NamaBarang}</div>
-                <div className="text-sm text-gray-500">{item.KodeBarang}</div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span>Rp {formatRupiah(item.HargaJual)}</span>
-
-                <button
-                  onClick={() => addToCart(item)}
-                  className="bg-green-500 text-white px-3 py-1 rounded"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* RIGHT */}
-      <div className="col-span-2 flex flex-col gap-4">
-        {/* CART */}
-        <div className="bg-white p-4 rounded shadow">
-          <div className="flex justify-between mb-2">
-            <h2 className="font-bold text-lg">Keranjang</h2>
-
-            <button
-              onClick={() => setCart([])}
-              className="bg-red-500 text-white px-3 py-1 rounded"
-            >
-              Kosongkan
-            </button>
+            {kategori.map((item: any) => (
+              <button
+                key={item.KodeKategori}
+                onClick={() => setSelectedKategori(item.KodeKategori)}
+                className={`px-3 py-2 rounded border ${
+                  selectedKategori === item.KodeKategori
+                    ? "bg-blue-600 text-white"
+                    : "bg-white"
+                }`}
+              >
+                {item.NamaKategori}
+              </button>
+            ))}
           </div>
 
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-2">Kode</th>
-                <th className="p-2">Nama</th>
-                <th className="p-2">Qty</th>
-                <th className="p-2">Harga</th>
-                <th className="p-2">Subtotal</th>
-                <th className="p-2">Aksi</th>
-              </tr>
-            </thead>
+          <div className="overflow-auto">
+            {filteredProduk.map((item) => (
+              <div
+                key={item.KodeBarang}
+                className="border p-2 mb-2 rounded flex justify-between items-center"
+              >
+                <div>
+                  <div className="font-semibold">{item.NamaBarang}</div>
+                  <div className="text-sm text-gray-500">{item.KodeBarang}</div>
+                </div>
 
-            <tbody>
-              {cart.length > 0 ? (
-                cart.map((item) => (
-                  <tr key={item.KodeBarang}>
-                    <td className="p-2">{item.KodeBarang}</td>
-                    <td className="p-2">{item.NamaBarang}</td>
+                <div className="flex items-center gap-3">
+                  <span>Rp {formatRupiah(item.HargaJual)}</span>
 
-                    <td className="p-2">
-                      <div className="flex gap-2">
+                  <button
+                    onClick={() => addToCart(item)}
+                    className="bg-green-500 text-white px-3 py-1 rounded"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <div className="col-span-2 flex flex-col gap-4">
+          {/* CART */}
+          <div className="bg-white p-4 rounded shadow">
+            <div className="flex justify-between mb-2">
+              <h2 className="font-bold text-lg">Keranjang</h2>
+
+              <button
+                onClick={() => setCart([])}
+                className="bg-red-500 text-white px-3 py-1 rounded"
+              >
+                Kosongkan
+              </button>
+            </div>
+
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="p-2">Kode</th>
+                  <th className="p-2">Nama</th>
+                  <th className="p-2">Qty</th>
+                  <th className="p-2">Harga</th>
+                  <th className="p-2">Subtotal</th>
+                  <th className="p-2">Aksi</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {cart.length > 0 ? (
+                  cart.map((item) => (
+                    <tr key={item.KodeBarang}>
+                      <td className="p-2">{item.KodeBarang}</td>
+                      <td className="p-2">{item.NamaBarang}</td>
+
+                      <td className="p-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => updateQty(item.KodeBarang, "minus")}
+                            className="bg-gray-300 px-2"
+                          >
+                            -
+                          </button>
+
+                          {item.qty}
+
+                          <button
+                            onClick={() => updateQty(item.KodeBarang, "plus")}
+                            className="bg-gray-300 px-2"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </td>
+
+                      <td className="p-2">Rp {formatRupiah(item.HargaJual)}</td>
+
+                      <td className="p-2">
+                        Rp {formatRupiah(item.qty * item.HargaJual)}
+                      </td>
+
+                      <td className="p-2">
                         <button
-                          onClick={() => updateQty(item.KodeBarang, "minus")}
-                          className="bg-gray-300 px-2"
+                          onClick={() => removeItem(item.KodeBarang)}
+                          className="bg-red-500 text-white px-2 rounded"
                         >
-                          -
+                          🗑
                         </button>
-
-                        {item.qty}
-
-                        <button
-                          onClick={() => updateQty(item.KodeBarang, "plus")}
-                          className="bg-gray-300 px-2"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </td>
-
-                    <td className="p-2">Rp {formatRupiah(item.HargaJual)}</td>
-
-                    <td className="p-2">
-                      Rp {formatRupiah(item.qty * item.HargaJual)}
-                    </td>
-
-                    <td className="p-2">
-                      <button
-                        onClick={() => removeItem(item.KodeBarang)}
-                        className="bg-red-500 text-white px-2 rounded"
-                      >
-                        🗑
-                      </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center p-4">
+                      Belum ada transaksi
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="text-center p-4">
-                    Belum ada transaksi
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                )}
+              </tbody>
+            </table>
+          </div>
 
-        {/* PAYMENT */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* DETAIL */}
-          <div className="bg-white p-4 rounded shadow">
-            <h3 className="font-bold mb-3">Detail Pembayaran</h3>
+          {/* PAYMENT */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* DETAIL */}
+            <div className="bg-white p-4 rounded shadow">
+              <h3 className="font-bold mb-3">Detail Pembayaran</h3>
 
-            <div className="flex justify-between font-bold">
-              <span>Total</span>
-              <span>Rp {formatRupiah(total)}</span>
+              <div className="flex justify-between font-bold">
+                <span>Total</span>
+                <span>Rp {formatRupiah(total)}</span>
+              </div>
+
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Uang bayar"
+                className="border p-2 w-full mt-3 rounded"
+                value={bayar === 0 ? "" : formatRupiah(bayar)}
+                onChange={(e) => {
+                  const angka = e.target.value.replace(/\D/g, "");
+                  if (angka === "") {
+                    setBayar(0);
+                    return;
+                  }
+                  setBayar(Number(angka));
+                }}
+              />
+
+              <div className="flex justify-between mt-2">
+                <span>Kembalian</span>
+                <span className="text-green-600 font-bold">
+                  Rp {formatRupiah(kembali)}
+                </span>
+              </div>
+
+              {/* PAYMENT METHOD */}
+              <div className="flex gap-2 mt-4">
+                {["tunai", "qris", "kartu"].map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPayment(p)}
+                    className={`px-3 py-2 rounded border ${
+                      payment === p ? "bg-blue-600 text-white" : "bg-gray-100"
+                    }`}
+                  >
+                    {p.toUpperCase()}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <input
-              type="number"
-              placeholder="Uang bayar"
-              className="border p-2 w-full mt-3 rounded"
-              value={bayar}
-              onChange={(e) => setBayar(Number(e.target.value))}
-            />
+            {/* ACTION */}
+            <div className="bg-white p-4 rounded shadow">
+              <h3 className="font-bold mb-3">Simpan Transaksi</h3>
 
-            <div className="flex justify-between mt-2">
-              <span>Kembalian</span>
-              <span className="text-green-600 font-bold">
-                Rp {formatRupiah(kembali)}
-              </span>
-            </div>
+              <button
+                onClick={handleSave}
+                disabled={loading}
+                className="bg-green-600 text-white w-full p-3 rounded mb-2 disabled:bg-gray-400"
+              >
+                {loading ? "Menyimpan..." : "Simpan Transaksi"}
+              </button>
 
-            {/* PAYMENT METHOD */}
-            <div className="flex gap-2 mt-4">
-              {["tunai", "qris", "kartu"].map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPayment(p)}
-                  className={`px-3 py-2 rounded border ${
-                    payment === p ? "bg-blue-600 text-white" : "bg-gray-100"
-                  }`}
-                >
-                  {p.toUpperCase()}
-                </button>
-              ))}
+              <button
+                onClick={() => setCart([])}
+                className="bg-gray-300 w-full p-3 rounded"
+              >
+                Batal
+              </button>
             </div>
           </div>
 
-          {/* ACTION */}
-          <div className="bg-white p-4 rounded shadow">
-            <h3 className="font-bold mb-3">Simpan Transaksi</h3>
+          {/* INFO */}
+          <div className="bg-white p-4 rounded shadow grid grid-cols-3 text-center">
+            <div>
+              <div className="text-gray-500">Jumlah Item</div>
+              <div className="font-bold text-lg">{totalItem}</div>
+            </div>
 
-            <button
-              onClick={handleSave}
-              disabled={loading}
-              className="bg-green-600 text-white w-full p-3 rounded mb-2 disabled:bg-gray-400"
-            >
-              {loading ? "Menyimpan..." : "Simpan Transaksi"}
-            </button>
+            <div>
+              <div className="text-gray-500">Total Qty</div>
+              <div className="font-bold text-lg">{totalQty}</div>
+            </div>
 
-            <button
-              onClick={() => setCart([])}
-              className="bg-gray-300 w-full p-3 rounded"
-            >
-              Batal
-            </button>
-          </div>
-        </div>
-
-        {/* INFO */}
-        <div className="bg-white p-4 rounded shadow grid grid-cols-3 text-center">
-          <div>
-            <div className="text-gray-500">Jumlah Item</div>
-            <div className="font-bold text-lg">{totalItem}</div>
-          </div>
-
-          <div>
-            <div className="text-gray-500">Total Qty</div>
-            <div className="font-bold text-lg">{totalQty}</div>
-          </div>
-
-          <div>
-            <div className="text-gray-500">Diskon</div>
-            <div className="font-bold text-lg">0</div>
+            <div>
+              <div className="text-gray-500">Diskon</div>
+              <div className="font-bold text-lg">0</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </PermissionGuard>
   );
 }

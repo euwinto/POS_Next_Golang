@@ -1,4 +1,4 @@
-// File: D:\FrontEnd\Nextjs\next14-starter\src\app\dashboard\layout.tsx
+// File: D:\FrontEnd\Nextjs\POS_Next_Golang\src\app\dashboard\layout.tsx
 import * as entry from '../../../../src/app/dashboard/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

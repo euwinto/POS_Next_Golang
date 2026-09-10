@@ -1,4 +1,4 @@
-// File: D:\FrontEnd\Nextjs\next14-starter\src\app\dashboard\master\produk\page.tsx
+// File: D:\FrontEnd\Nextjs\POS_Next_Golang\src\app\dashboard\master\produk\page.tsx
 import * as entry from '../../../../../../src/app/dashboard/master/produk/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

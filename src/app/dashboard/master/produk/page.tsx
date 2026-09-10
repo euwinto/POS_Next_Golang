@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PermissionGuard from "@/components/PermissionGuard";
 
 export default function ProdukPage() {
   const [produk, setProduk] = useState([]);
@@ -15,7 +16,12 @@ export default function ProdukPage() {
   });
 
   const getProduk = async () => {
-    const res = await fetch("/api/master/produk");
+    const res = await fetch("http://localhost:8080/api/produk", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     const data = await res.json();
     setProduk(data);
   };
@@ -25,31 +31,49 @@ export default function ProdukPage() {
   // =========================
 
   const getKategori = async () => {
-    const res = await fetch("/api/master/kategori");
+    const res = await fetch("http://localhost:8080/api/kategori", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     const data = await res.json();
 
     setKategori(data);
   };
 
-  useEffect(() => {
-    getProduk();
-    getKategori();
-  }, []);
+  const formatRupiah = (value: string) => {
+    const angka = value.replace(/\D/g, "");
+    if (!angka) {
+      return "";
+    }
+    return new Intl.NumberFormat("id-ID").format(Number(angka));
+  };
+
+  // useEffect(() => {
+  //   getProduk();
+  //   getKategori();
+  // }, []);
 
   useEffect(() => {
     getProduk();
     getKategori();
   }, []);
-
+  const token = localStorage.getItem("token");
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    await fetch("/api/master/produk", {
+    await fetch("http://localhost:8080/api/produk", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        hargaBeli: Number(form.hargaBeli.replace(/\./g, "")),
+        hargaJual: Number(form.hargaJual.replace(/\./g, "")),
+      }),
     });
 
     setForm({
@@ -64,30 +88,31 @@ export default function ProdukPage() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Master Produk</h1>
+    <PermissionGuard menuCode="PRODUK">
+      <div>
+        <h1 className="text-2xl font-bold mb-6">Master Produk</h1>
 
-      {/* FORM */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded shadow mb-6"
-      >
-        <div className="grid grid-cols-2 gap-4">
-          {/* <input
+        {/* FORM */}
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-6 rounded shadow mb-6"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            {/* <input
             placeholder="Kode Barang"
             className="border p-2"
             value={form.kodeBarang}
             onChange={(e) => setForm({ ...form, kodeBarang: e.target.value })}
           /> */}
 
-          <input
-            placeholder="Nama Barang"
-            className="border p-2"
-            value={form.namaBarang}
-            onChange={(e) => setForm({ ...form, namaBarang: e.target.value })}
-          />
+            <input
+              placeholder="Nama Barang"
+              className="border p-2"
+              value={form.namaBarang}
+              onChange={(e) => setForm({ ...form, namaBarang: e.target.value })}
+            />
 
-          {/* <input
+            {/* <input
             placeholder="Kategori"
             className="border p-2"
             value={form.kategoriBarang}
@@ -100,79 +125,94 @@ export default function ProdukPage() {
             
           /> */}
 
-          <select
-            className="border p-2"
-            value={form.kategoriBarang}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                kategoriBarang: e.target.value,
-              })
-            }
-          >
-            <option value="">Pilih Kategori</option>
+            <select
+              className="border p-2"
+              value={form.kategoriBarang}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  kategoriBarang: e.target.value,
+                })
+              }
+            >
+              <option value="">Pilih Kategori</option>
 
-            {kategori.map((item: any) => (
-              <option key={item.KodeKategori} value={item.KodeKategori}>
-                {item.NamaKategori}
-              </option>
-            ))}
-          </select>
+              {kategori.map((item: any) => (
+                <option key={item.KodeKategori} value={item.KodeKategori}>
+                  {item.NamaKategori}
+                </option>
+              ))}
+            </select>
 
-          <input
-            placeholder="Harga Beli"
-            className="border p-2"
-            value={form.hargaBeli}
-            onChange={(e) => setForm({ ...form, hargaBeli: e.target.value })}
-          />
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="Harga Beli"
+              className="border p-2"
+              value={form.hargaBeli}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  hargaBeli: formatRupiah(e.target.value),
+                })
+              }
+            />
 
-          <input
-            placeholder="Harga Jual"
-            className="border p-2"
-            value={form.hargaJual}
-            onChange={(e) => setForm({ ...form, hargaJual: e.target.value })}
-          />
-        </div>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="Harga Jual"
+              className="border p-2"
+              value={form.hargaJual}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  hargaJual: formatRupiah(e.target.value),
+                })
+              }
+            />
+          </div>
 
-        <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
-          Simpan
-        </button>
-      </form>
+          <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
+            Simpan
+          </button>
+        </form>
 
-      {/* TABLE */}
-      <div className="bg-white p-6 rounded shadow">
-        <h2 className="font-bold mb-4">Daftar Produk</h2>
+        {/* TABLE */}
+        <div className="bg-white p-6 rounded shadow">
+          <h2 className="font-bold mb-4">Daftar Produk</h2>
 
-        <table className="w-full border">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2">Kode</th>
-              <th className="border p-2">Nama</th>
-              <th className="border p-2">Kategori</th>
-              <th className="border p-2">Harga Jual</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {produk.length > 0 ? (
-              produk.map((item: any) => (
-                <tr key={item.Id}>
-                  <td className="border p-2">{item.KodeBarang}</td>
-                  <td className="border p-2">{item.NamaBarang}</td>
-                  <td className="border p-2">{item.KategoriBarang}</td>
-                  <td className="border p-2">{item.HargaJual}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="text-center p-4">
-                  Tidak ada data
-                </td>
+          <table className="w-full border">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border p-2">Kode</th>
+                <th className="border p-2">Nama</th>
+                <th className="border p-2">Kategori</th>
+                <th className="border p-2">Harga Jual</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {produk.length > 0 ? (
+                produk.map((item: any) => (
+                  <tr key={item.ID}>
+                    <td className="border p-2">{item.KodeBarang}</td>
+                    <td className="border p-2">{item.NamaBarang}</td>
+                    <td className="border p-2">{item.KategoriBarang}</td>
+                    <td className="border p-2">{item.HargaJual}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="text-center p-4">
+                    Tidak ada data
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </PermissionGuard>
   );
 }

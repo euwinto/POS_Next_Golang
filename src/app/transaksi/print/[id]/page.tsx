@@ -14,9 +14,23 @@ export default function PrintStrukPage() {
   };
 
   const getData = async () => {
+    const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`/api/transaction/${noTransaksi}`);
+      // const res = await fetch(`/api/transaction/${noTransaksi}`);
+      const res = await fetch(
+        `http://localhost:8080/api/transaction/${noTransaksi}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(result.message || "Transaksi tidak ditemukan");
+      }
 
       setData(result);
     } catch (err) {
@@ -57,7 +71,7 @@ export default function PrintStrukPage() {
         <div className="mb-2">
           <div>No : {data.header.NoTransaksi}</div>
           <div>Tgl : {data.header.Tanggal}</div>
-          <div>Kasir : ADMIN</div>
+          <div>Kasir : {data.header.Nama}</div>
           <div>Bayar : {data.header.JenisPembayaran}</div>
         </div>
 

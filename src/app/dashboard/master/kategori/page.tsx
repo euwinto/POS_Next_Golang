@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
+import PermissionGuard from "@/components/PermissionGuard";
 
 export default function KategoriPage() {
   const [kategori, setKategori] = useState([]);
-
+  const token = localStorage.getItem("token");
   const getKategori = async () => {
-    const res = await fetch("/api/master/kategori");
+    // const res = await fetch("/api/master/kategori");
+    const res = await fetch("http://localhost:8080/api/kategori", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     const data = await res.json();
     setKategori(data);
   };
@@ -25,10 +31,11 @@ export default function KategoriPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch("/api/master/kategori", {
+      const res = await fetch("http://localhost:8080/api/kategori", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(form),
       });
@@ -65,76 +72,80 @@ export default function KategoriPage() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Master Kategori</h1>
+    <PermissionGuard menuCode="KATEGORI">
+      <div>
+        <h1 className="text-2xl font-bold mb-6">Master Kategori</h1>
 
-      {/* FORM */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded shadow mb-6"
-      >
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            placeholder="Nama Kategori"
-            className="border p-2"
-            value={form.namaKategori}
-            onChange={(e) => setForm({ ...form, namaKategori: e.target.value })}
-          />
-
-          <label className="flex items-center gap-2">
+        {/* FORM */}
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-6 rounded shadow mb-6"
+        >
+          <div className="grid grid-cols-2 gap-4">
             <input
-              type="checkbox"
-              checked={form.status}
+              placeholder="Nama Kategori"
+              className="border p-2"
+              value={form.namaKategori}
               onChange={(e) =>
-                setForm({
-                  ...form,
-                  status: e.target.checked,
-                })
+                setForm({ ...form, namaKategori: e.target.value })
               }
             />
-            Aktif
-          </label>
-        </div>
 
-        <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
-          Simpan
-        </button>
-      </form>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.status}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    status: e.target.checked,
+                  })
+                }
+              />
+              Aktif
+            </label>
+          </div>
 
-      {/* TABLE */}
-      <div className="bg-white p-6 rounded shadow">
-        <h2 className="font-bold mb-4">Daftar Produk</h2>
+          <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
+            Simpan
+          </button>
+        </form>
 
-        <table className="w-full border">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2">Kode</th>
-              <th className="border p-2">Nama Kategori</th>
-              <th className="border p-2">Status</th>
-            </tr>
-          </thead>
+        {/* TABLE */}
+        <div className="bg-white p-6 rounded shadow">
+          <h2 className="font-bold mb-4">Daftar Produk</h2>
 
-          <tbody>
-            {kategori.length > 0 ? (
-              kategori.map((item: any) => (
-                <tr key={item.Id}>
-                  <td className="border p-2">{item.KodeKategori}</td>
-                  <td className="border p-2">{item.NamaKategori}</td>
-                  <td className="border p-2">
-                    {item.Status ? "Aktif" : "Nonaktif"}
+          <table className="w-full border">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border p-2">Kode</th>
+                <th className="border p-2">Nama Kategori</th>
+                <th className="border p-2">Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {kategori.length > 0 ? (
+                kategori.map((item: any) => (
+                  <tr key={item.Id}>
+                    <td className="border p-2">{item.KodeKategori}</td>
+                    <td className="border p-2">{item.NamaKategori}</td>
+                    <td className="border p-2">
+                      {item.Status ? "Aktif" : "Nonaktif"}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className="text-center p-4">
+                    Tidak ada data
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={3} className="text-center p-4">
-                  Tidak ada data
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </PermissionGuard>
   );
 }

@@ -1,4 +1,4 @@
-// File: D:\FrontEnd\Nextjs\next14-starter\src\app\api\auth\[...nextauth]\route.ts
+// File: D:\FrontEnd\Nextjs\POS_Next_Golang\src\app\api\auth\[...nextauth]\route.ts
 import * as entry from '../../../../../../src/app/api/auth/[...nextauth]/route.js'
 import type { NextRequest } from 'next/server.js'
 
